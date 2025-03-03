@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Evolution Idle Clicker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    #game {
+      margin: 30px auto;
+      width: 90%;
+      max-width: 600px;
+      background: #fff;
+      padding: 20px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 2px 2px 12px rgba(0,0,0,0.1);
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    #stats p {
+      font-size: 18px;
+      margin: 5px 0;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 4px;
+      border: none;
+      background-color: #4286f4;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #326ac0;
+    }
+    #shop, #branches, #prestigeSection {
+      margin-top: 20px;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
+    }
+    #branches {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <h1>Evolution Idle Clicker</h1>
+    <div id="stats">
+      <p>Score: <span id="score">0</span></p>
+      <p>Current Form: <span id="evolution">Microscopic Organism</span></p>
+      <p>Prestige Points: <span id="prestige">0</span></p>
+    </div>
+    <button id="clickerButton">Click Me!</button>
+    
+    <div id="shop">
+      <h2>Shop</h2>
+      <button id="upgradeClick">Upgrade Click (+1) - Cost: <span id="upgradeClickCost">10</span></button>
+      <button id="buyAuto">Buy Auto-Clicker - Cost: <span id="autoCost">50</span></button>
+      <button id="evolveButton">Evolve - Cost: <span id="evolveCost">100</span></button>
+    </div>
+    
+    <div id="branches">
+      <h2>Choose Evolution Path</h2>
+      <button class="branchButton" data-branch="mammal">Mammal</button>
+      <button class="branchButton" data-branch="bird">Bird</button>
+      <button class="branchButton" data-branch="fish">Fish</button>
+    </div>
+    
+    <div id="prestigeSection">
+      <button id="prestigeButton">Prestige</button>
+    </div>
+  </div>
+  
+  <script>
+    // Game state variables
+    let score = 0;
+    let clickValue = 1;
+    let autoClickers = 0;
+    let evolutionLevel = 0;
+    let currentForm = "Microscopic Organism";
+    let prestigePoints = 0;
+
+    let upgradeClickCost = 10;
+    let autoClickCost = 50;
+    let evolveCost = 100;
+
+    // Evolution paths with a list of names (cycling endlessly using a + counter)
+    const evolutionPaths = {
+      mammal: { 
+        names: ["Mouse", "Rat", "Possum", "Cat", "Dog", "Monkey", "Human", "Elephant"],
+        perk: "Click bonus increased."
+      },
+      bird: { 
+        names: ["Sparrow", "Pigeon", "Parrot", "Eagle", "Falcon", "Owl", "Peacock"],
+        perk: "Auto-click speed increased."
+      },
+      fish: { 
+        names: ["Guppy", "Trout", "Salmon", "Tuna", "Shark", "Marlin", "Dolphin"],
+        perk: "Bonus score splash!"
+      }
+    };
+    // Track evolution index for each branch (for endless progression)
+    let evolutionIndices = { mammal: 0, bird: 0, fish: 0 };
+
+    // Function to update on-screen display
+    function updateDisplay() {
+      document.getElementById("score").innerText = Math.floor(score);
+      document.getElementById("evolution").innerText = currentForm;
+      document.getElementById("upgradeClickCost").innerText = upgradeClickCost;
+      document.getElementById("autoCost").innerText = autoClickCost;
+      document.getElementById("evolveCost").innerText = evolveCost;
+      document.getElementById("prestige").innerText = prestigePoints;
+    }
+
+    // Click button adds to score
+    document.getElementById("clickerButton").addEventListener("click", function() {
+      score += clickValue;
+      updateDisplay();
+    });
+
+    // Shop: Upgrade click power
+    document.getElementById("upgradeClick").addEventListener("click", function() {
+      if (score >= upgradeClickCost) {
+        score -= upgradeClickCost;
+        clickValue += 1; // Increase click value
+        upgradeClickCost = Math.floor(upgradeClickCost * 1.5);
+        updateDisplay();
+      }
+    });
+
+    // Shop: Buy an auto-clicker
+    document.getElementById("buyAuto").addEventListener("click", function() {
+      if (score >= autoClickCost) {
+        score -= autoClickCost;
+        autoClickers += 1;
+        autoClickCost = Math.floor(autoClickCost * 1.7);
+        updateDisplay();
+      }
+    });
+
+    // Auto-clicker effect (adds score every second)
+    setInterval(function() {
+      score += autoClickers * clickValue;
+      updateDisplay();
+    }, 1000);
+
+    // Shop: Evolve button – opens branch selection if you have enough score
+    document.getElementById("evolveButton").addEventListener("click", function() {
+      if (score >= evolveCost) {
+        score -= evolveCost;
+        document.getElementById("branches").style.display = "block";
+        updateDisplay();
+      }
+    });
+
+    // Handle evolution branch selection
+    let branchButtons = document.getElementsByClassName("branchButton");
+    for (let i = 0; i < branchButtons.length; i++) {
+      branchButtons[i].addEventListener("click", function() {
+        let branch = this.getAttribute("data-branch");
+        let index = evolutionIndices[branch];
+        let namesArray = evolutionPaths[branch].names;
+        // Cycle through names endlessly
+        let newForm = namesArray[index % namesArray.length] + (index >= namesArray.length ? " +" + Math.floor(index / namesArray.length) : "");
+        currentForm = newForm;
+        evolutionIndices[branch] += 1;
+        evolutionLevel += 1;
+        // Scale evolve cost for next evolution
+        evolveCost = Math.floor(evolveCost * 2);
+        // Apply branch-specific perks
+        if (branch === "mammal") {
+          clickValue += 1; // Mammals boost click power
+        } else if (branch === "bird") {
+          autoClickers += 1; // Birds add an extra auto-clicker
+        } else if (branch === "fish") {
+          score += 50; // Fish give an instant score splash bonus
+        }
+        // Hide branch selection
+        document.getElementById("branches").style.display = "none";
+        updateDisplay();
+      });
+    }
+
+    // Prestige: Reset progress for long‑term bonuses (requires a minimum evolution level)
+    document.getElementById("prestigeButton").addEventListener("click", function() {
+      if (evolutionLevel >= 5) { // Only allow prestige after some progress
+        let pointsGained = Math.floor(evolutionLevel / 5);
+        prestigePoints += pointsGained;
+        // Reset all game state except prestigePoints
+        score = 0;
+        clickValue = 1 + prestigePoints; // Prestige boosts click power permanently
+        autoClickers = 0;
+        evolutionLevel = 0;
+        currentForm = "Microscopic Organism";
+        upgradeClickCost = 10;
+        autoClickCost = 50;
+        evolveCost = 100;
+        evolutionIndices = { mammal: 0, bird: 0, fish: 0 };
+        updateDisplay();
+      }
+    });
+
+    updateDisplay();
+  </script>
+</body>
+</html>
